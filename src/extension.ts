@@ -1,23 +1,32 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import hql from './language/hivesql';
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
+
+// 插件入口
 export function activate(context: vscode.ExtensionContext) {
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "sql-format" is now active!');
+	// 注册命令
+	let disposable = vscode.commands.registerCommand('sql.format', () => {
+		// 读取当前文件
+		let queryA  =  vscode.window.activeTextEditor.document.getText();
+		let languageId = vscode.window.activeTextEditor.document.languageId;
+		let end:number = vscode.window.activeTextEditor.document.lineCount;
+		let lenEnd:number = vscode.window.activeTextEditor.document.lineAt(end-1).text.length
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('sql-format.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from sql-format!');
+		if (languageId.toLowerCase().includes("sql")){
+			let cfg={language:'sql',uppercase:false,linesBetweenQueries:0}
+			vscode.window.activeTextEditor.edit(
+				editBuilder=>{
+					let text = new hql(cfg).format(queryA)
+					editBuilder.replace(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(end, lenEnd)), text);
+				}
+			)
+		};
+		
+			
+		vscode.window.showInformationMessage("format-success");
 	});
 
 	context.subscriptions.push(disposable);
